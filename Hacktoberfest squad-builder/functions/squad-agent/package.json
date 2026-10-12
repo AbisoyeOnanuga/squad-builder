@@ -1,0 +1,11 @@
+{
+  "name": "squad-agent",
+  "private": true,
+  "type": "module",
+  "main": "src/main.js",
+  "dependencies": {
+    "@ai-sdk/groq": "^3.0.0",
+    "ai": "^6.0.0",
+    "node-appwrite": "^29.2.0"
+  }
+}
