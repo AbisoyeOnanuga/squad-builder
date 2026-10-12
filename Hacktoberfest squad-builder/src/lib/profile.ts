@@ -142,7 +142,6 @@ export function scoreMatches(me: Profile, others: Profile[]): Match[] {
     if (profile.id === me.id || !profile.open) continue
     if (profile.event.toLowerCase() !== me.event.toLowerCase()) continue
 
-    const theirs = new Set(profile.skills.map((skill) => skill.toLowerCase()))
     const theyBring = profile.skills.filter((skill) => !mine.has(skill.toLowerCase()))
     const shared = profile.skills.filter((skill) => mine.has(skill.toLowerCase()))
     let score = theyBring.length * 3
