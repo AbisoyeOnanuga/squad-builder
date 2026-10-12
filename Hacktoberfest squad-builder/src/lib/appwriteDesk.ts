@@ -1,4 +1,5 @@
 import { ExecutionMethod, ID, Permission, Query, Role } from 'appwrite'
+import type { Models } from 'appwrite'
 import { account, functions, tablesDB } from './appwrite'
 import { appwriteConfig } from './config'
 import { errorMessage, isNotFound } from './errors'
@@ -15,9 +16,9 @@ import {
   type TeamInput,
 } from './profile'
 
-type ProfileRow = ProfileInput & { $id: string }
-type TeamRow = TeamInput & { $id: string; ownerId: string; ownerName: string }
-type RequestRow = Omit<JoinRequest, 'id'> & { $id: string }
+type ProfileRow = Models.Row & ProfileInput
+type TeamRow = Models.Row & TeamInput & { ownerId: string; ownerName: string }
+type RequestRow = Models.Row & Omit<JoinRequest, 'id'>
 
 function asProfile(row: ProfileRow): Profile | null {
   const parsed = profileSchema.safeParse({

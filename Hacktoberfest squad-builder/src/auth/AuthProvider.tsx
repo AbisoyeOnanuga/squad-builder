@@ -1,19 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import * as desk from '../lib/desk'
 import type { DeskUser } from '../lib/profile'
-
-type AuthContextValue = {
-  user: DeskUser | null
-  ready: boolean
-  signInOpen: boolean
-  openSignIn: () => void
-  closeSignIn: () => void
-  register: (input: { email: string; password: string; name: string }) => Promise<void>
-  login: (input: { email: string; password: string }) => Promise<void>
-  logout: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+import { AuthContext, type AuthContextValue } from './context'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<DeskUser | null>(null)
@@ -58,10 +46,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const value = useContext(AuthContext)
-  if (!value) throw new Error('useAuth must be used inside AuthProvider')
-  return value
 }
