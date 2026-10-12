@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 import { ProfileCard } from '../components/ProfileCard'
 import * as desk from '../lib/desk'
 import { errorMessage } from '../lib/errors'
@@ -43,34 +43,33 @@ export function ProfilePage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const [saveError, setSaveError] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loadedFor, setLoadedFor] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [drafting, setDrafting] = useState(false)
 
   useEffect(() => {
-    if (!ready) return
-    if (!user) {
-      setLoading(false)
-      return
-    }
+    if (!ready || !user) return
     let cancelled = false
-    desk.getProfile(user.id)
+    const userId = user.id
+    desk.getProfile(userId)
       .then((profile) => {
         if (cancelled) return
         const next = profile ?? blankProfile(user.name)
         setForm(next)
         setSkillText(next.skills.join(', '))
+        setLoadedFor(userId)
       })
       .catch((error: unknown) => {
-        if (!cancelled) setSaveError(errorMessage(error))
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (cancelled) return
+        setSaveError(errorMessage(error))
+        setLoadedFor(userId)
       })
     return () => {
       cancelled = true
     }
   }, [ready, user])
+
+  const loading = !ready || (user !== null && loadedFor !== user.id)
 
   function patch(partial: Partial<ProfileInput>) {
     setForm((current) => (current ? { ...current, ...partial } : current))

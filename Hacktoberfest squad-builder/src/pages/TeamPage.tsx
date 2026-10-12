@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 import * as desk from '../lib/desk'
 import { errorMessage } from '../lib/errors'
 import type { JoinRequest, Team } from '../lib/profile'

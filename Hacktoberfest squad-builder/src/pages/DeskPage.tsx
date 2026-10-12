@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/useAuth'
 import { ProfileCard } from '../components/ProfileCard'
 import * as desk from '../lib/desk'
 import { errorMessage } from '../lib/errors'
@@ -20,11 +20,13 @@ import { Button, Loader, SplitFlap } from '../ui/desk'
 
 export function DeskPage() {
   const { user, ready, openSignIn } = useAuth()
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [teams, setTeams] = useState<Team[]>([])
-  const [mine, setMine] = useState<Profile | null>(null)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [loadError, setLoadError] = useState('')
+  const [board, setBoard] = useState<{
+    userId: string | null
+    profiles: Profile[]
+    teams: Team[]
+    mine: Profile | null
+    error: string
+  } | null>(null)
   const [filters, setFilters] = useState<BoardFilters>(emptyFilters)
   const [whys, setWhys] = useState<Record<string, string>>({})
   const [agentNote, setAgentNote] = useState('')
@@ -33,37 +35,33 @@ export function DeskPage() {
   useEffect(() => {
     if (!ready) return
     let cancelled = false
-    setStatus('loading')
+    const userId = user?.id ?? null
     const profilePromise = user ? desk.getProfile(user.id) : Promise.resolve(null)
     Promise.all([desk.listProfiles(), desk.listTeams(), profilePromise])
-      .then(([nextProfiles, nextTeams, nextMine]) => {
+      .then(([profiles, teams, mine]) => {
         if (cancelled) return
-        setProfiles(nextProfiles)
-        setTeams(nextTeams)
-        setMine(nextMine)
-        setStatus('ready')
+        setBoard({ userId, profiles, teams, mine, error: '' })
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        setLoadError(errorMessage(error))
-        setStatus('error')
+        setBoard({ userId, profiles: [], teams: [], mine: null, error: errorMessage(error) })
       })
     return () => {
       cancelled = true
     }
   }, [ready, user])
 
-  const visible = useMemo(() => profiles.filter((profile) => matchesFilters(profile, filters)), [filters, profiles])
+  const userId = user?.id ?? null
+  const current = board && board.userId === userId ? board : null
+  const status = !ready || !current ? 'loading' : current.error ? 'error' : 'ready'
+  const profiles = current?.profiles ?? []
+  const teams = current?.teams ?? []
+  const mine = current?.mine ?? null
+  const loadError = current?.error ?? ''
+  const visible = profiles.filter((profile) => matchesFilters(profile, filters))
   const suggestions = mine ? scoreMatches(mine, profiles) : []
-  const teamByOwner = useMemo(() => {
-    const map = new Map<string, Team>()
-    for (const team of teams) map.set(team.ownerId, team)
-    return map
-  }, [teams])
-  const roles = useMemo(() => {
-    const unique = new Set(profiles.map((profile) => profile.role))
-    return [...unique].sort((a, b) => a.localeCompare(b))
-  }, [profiles])
+  const teamByOwner = new Map(teams.map((team) => [team.ownerId, team]))
+  const roles = [...new Set(profiles.map((profile) => profile.role))].sort((a, b) => a.localeCompare(b))
 
   function patchFilters(patch: Partial<BoardFilters>) {
     setFilters((current) => ({ ...current, ...patch }))
